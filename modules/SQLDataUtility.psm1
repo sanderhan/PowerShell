@@ -1,6 +1,6 @@
 <# 
  .Synopsis
-  PNI Data Utility.
+  SQL Server Data Utility for Import/Export data.
 
  .Description
     Useful functions to export/import data from database.
@@ -18,20 +18,13 @@
 
  .Functions
     
-    Invoke-BCP -OpType <String> {IN | OUT | QUERYOUT } –DataFile <String> -Server <String> -Database <String> -Table <String> -Query <String> [-User <String>] [-Password <String>] [ –Format <String> {Native | CSV} ]
-    Export-Tables  –DataPath <String> -Server <String> -Database <String>  [-User <String>] [-Password <String>] [–Tables <String[]>] [-SchemaIncludes <String[]>] [-SchemaExcludes <String[]>] [-TableIncludes <String[]>] [-TableExcludes <String[]>]
-    Import-Tables  –DataPath <String> -Server <String> -Database <String>  [-User <String>] [-Password <String>] [–Tables <String[]>] [-Clear]
-    Email-Directory  –Path <String> -To <String[]> -Subject <String>  [-Message <String>]
-    Email-Files  –Files <String[]> -To <String[]> -Subject <String>  [-Message <String>] [-Compress] [-CompressFileName <String>] 
+    Invoke-BCP -OpType <String> {IN | OUT | QUERYOUT } â€“DataFile <String> -Server <String> -Database <String> -Table <String> -Query <String> [-User <String>] [-Password <String>] [ â€“Format <String> {Native | CSV} ]
+    Export-Tables  â€“DataPath <String> -Server <String> -Database <String>  [-User <String>] [-Password <String>] [â€“Tables <String[]>] [-SchemaIncludes <String[]>] [-SchemaExcludes <String[]>] [-TableIncludes <String[]>] [-TableExcludes <String[]>]
+    Import-Tables  â€“DataPath <String> -Server <String> -Database <String>  [-User <String>] [-Password <String>] [â€“Tables <String[]>] [-Clear]
 
-    
  .Example
     # Export data from tables in ,<atabase> on Server <db instance> to folder C:\Dump, table <schema>.<mytable> is not exported.
     Export-Tables -Server >db instance> -Database <mydb> -TableExcludes "schema.mytable" -DataPath C:\Dump
-
- .Example
-    # Email all files under C:\Dump
-    Email-Directory -Path C:\Dump -To "xxx@xxxxx.com" -Subject "zipped data file." -Message "Data file is attached."  
 
  .Example
     # Import data from data files which were exported by export-tables under C:\ImportData
@@ -326,55 +319,6 @@ function Compress-Folder ([String]$Path, [String]$Outfile){
 }
 
 
-function Email-Files ([String[]]$files, [String]$To , [String]$Subject, [String]$Message,[Switch]$Compress, [String] $CompressFileName){
-
-    $from = ("{0}@pnimedia.com" -f $env:COMPUTERNAME)
-
-    if($Compress){
-
-        $tempDirName = ("DataExport_{0}" -f (Get-Date -Format "yyyyMMdd_HHmmss"))
-        $tempZipFile = "$tempDirName.zip"
-        $tempDir = Join-Path -Path $env:TEMP -ChildPath $tempDirName 
-        if(Test-Path -Path $tempDir -PathType Container){
-             Get-ChildItem -Path $tempDir| Remove-Item -Force  -ErrorAction SilentlyContinue
-        }else{
-             New-Item -Path $tempDir -ItemType Directory |Out-Null 
-        }
-
-        Copy-Item  -LiteralPath $files -Destination $tempDir -Force 
-
-        $filename = $CompressFileName
-        if(!$CompressFileName){
-            $filename = join-path -Path $env:TEMP -ChildPath $tempZipFile
-        }
-        if(!(Split-Path $filename -Parent)){
-            $filename = Join-Path -Path (Get-Location) -ChildPath $filename
-        }
-        Compress-Folder -Path $tempDir -Outfile $filename
-        $files = @($filename) 
-        Remove-Item -Path $tempDir -Force  -ErrorAction SilentlyContinue  -confirm:$false -Recurse
-    }
-    If(!$Message){$Message = "This is confidential, DO NOT DISTRIBUTE this email. `n "}
-    Send-MailMessage -SmtpServer "smtp" -From $from -To $To -Subject $Subject -Body $Message -Attachments $files 
-}
-
-function Email-Directory ([String]$Path, [String]$To , [String]$Subject, [String]$Message){
-
-    If( !(Test-Path -Path $Path -PathType Container)){
-        $err = "Email-Directory: $Path doesn't exist. "
-        Format-output -Message $err -Type ERROR |Write-Error
-        Throw $err
-    }
-
-    $filename = "{0}_{1}.zip" -f (Split-Path -Path $Path -Leaf) , (Get-Date -Format "yyyyMMddHHmmss")
-    $fullpath = Join-Path -Path $env:TEMP -ChildPath $filename
-    Compress-Folder -Path $path -Outfile $fullpath
-    Email-Files -files @($fullpath) -To $To -Subject $Subject -Message $Message 
-
-    Remove-Item $fullpath -Force
-}
-
-
 function Get-Tables ([String] $Server, [String]$Database,[String]$User,[String]$Password,
                      [String[]]$SchemaIncludes ,[String[]] $SchemaExcludes,
                      [String[]]$TableIncludes ,[String[]] $TableExcludes){
@@ -435,7 +379,5 @@ function Get-Tables ([String] $Server, [String]$Database,[String]$User,[String]$
 Export-modulemember -function Invoke-BCP
 Export-modulemember -function Export-Tables
 Export-modulemember -function Import-Tables
-Export-modulemember -function Email-Directory
-Export-modulemember -function Email-Files
 
 
