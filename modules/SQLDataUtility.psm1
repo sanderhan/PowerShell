@@ -1,6 +1,6 @@
 <# 
  .Synopsis
-  SQL Server Data Utility.
+  PNI Data Utility.
 
  .Description
     Useful functions to export/import data from database.
@@ -328,7 +328,7 @@ function Compress-Folder ([String]$Path, [String]$Outfile){
 
 function Email-Files ([String[]]$files, [String]$To , [String]$Subject, [String]$Message,[Switch]$Compress, [String] $CompressFileName){
 
-    $from = ("{0}@smtp.com" -f $env:COMPUTERNAME)
+    $from = ("{0}@pnimedia.com" -f $env:COMPUTERNAME)
 
     if($Compress){
 
